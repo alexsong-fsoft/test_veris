@@ -1,5 +1,7 @@
 const facTranRepo = require('../repository/facturaTransaccion');
 
+
+
 post = async (req, res, next) => {
     try {
 
@@ -62,6 +64,20 @@ post = async (req, res, next) => {
             return;
         }
 
+        //validacion nemonicoCanalFacturacion
+        if (body.nemonicoCanalFacturacion != 'CAJA' && body.nemonicoCanalFacturacion != 'KIOSKO' ) {
+            res.contentType('application/json').status(400);
+            res.send(JSON.stringify({
+                code: '400',
+                success: 'false',
+                message: `Campo nemonicoCanalFacturacion solo acepta los siguientes valores: ['CAJA','KIOSKO']`,
+                errorData: []
+            }));
+            return;
+        } else {
+            body.nemonicoCanalValor = body.nemonicoCanalFacturacion == 'CAJA' ? 1 : 2;
+        }
+
         //validacion de codigoEmpresa
         let empresaFind = await facTranRepo.findEmpresaByCodigo(parseInt(query.codigoEmpresa));
         if (empresaFind == null || empresaFind.length < 1) {
@@ -92,9 +108,24 @@ post = async (req, res, next) => {
         usuarioFind = usuarioFind[0];
         //console.log('usuario', usuarioFind);
 
+        
+        const facTran = {
+            CODIGO_EMPRESA: empresaFind.CODIGO_EMPRESA,
+            CODIGO_SUCURSAL: body.caja && body.caja.codigoSucursal ? body.caja.codigoSucursal : null, 
+            CODIGO_CAJA: body.caja && body.caja.codigoCaja ? body.caja.codigoCaja : null, 
+            NUMERO_PUNTO_EMISION: body.caja && body.caja.numeroPuntoEmision ? body.caja.numeroPuntoEmision : null,
+            SECUENCIA_USUARIO: usuarioFind.SECUENCIA_USUARIO,
+            CODIGO_USUARIO: usuarioFind.CODIGO_USUARIO,
+            TIPO_PRE_TRANSACCION: query.tipoPreTransaccion,
+            CODIGO_CANAL_FACTURACION: body.nemonicoCanalValor,
+            ES_ACTIVO: 'S',
+            SECUENCIA_USUARIO_INGRESO: 968,
+            USUARIO_INGRESO: 'ENEVAREZ'
+        };
+        console.log('factran1', facTran);
 
         //CREAR FACTURA TRANSACCION
-        let facTranCreada = await facTranRepo.createFacturaTransaccion(body);
+        let facTranCreada = await facTranRepo.createFacturaTransaccion(facTran);
         if(!facTranCreada.CODIGO_PRE_TRANSACCION){
             res.contentType('application/json').status(500);
             res.send(JSON.stringify({

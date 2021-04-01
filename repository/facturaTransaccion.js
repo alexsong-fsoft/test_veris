@@ -9,6 +9,9 @@ const createFacTranSql = `
 INSERT INTO LATINO_OWNER.FAC_PRE_TRANSACCIONES 
 (CODIGO_PRE_TRANSACCION,
     CODIGO_EMPRESA,
+    CODIGO_SUCURSAL, 
+    CODIGO_CAJA, 
+    NUMERO_PUNTO_EMISION,
     SECUENCIA_USUARIO,
     CODIGO_USUARIO,
     TIPO_PRE_TRANSACCION,
@@ -18,14 +21,17 @@ INSERT INTO LATINO_OWNER.FAC_PRE_TRANSACCIONES
     USUARIO_INGRESO,
     FECHA_INGRESO)
 VALUES(latino_owner.FAC_SEQ_PRE_TRANSACCIONES.Nextval,
-    1,
-    968,
-    'ENEVAREZ',
-    'FACTURA',
-    1,
-    'S',
-    968,
-    'ENEVAREZ',
+    :CODIGO_EMPRESA,
+    :CODIGO_SUCURSAL, 
+    :CODIGO_CAJA, 
+    :NUMERO_PUNTO_EMISION,
+    :SECUENCIA_USUARIO,
+    :CODIGO_USUARIO,
+    :TIPO_PRE_TRANSACCION,
+    :CODIGO_CANAL_FACTURACION,
+    :ES_ACTIVO,
+    :SECUENCIA_USUARIO_INGRESO,
+    :USUARIO_INGRESO,
     SYSDATE)returning CODIGO_PRE_TRANSACCION
     into :CODIGO_PRE_TRANSACCION
 `
@@ -88,8 +94,7 @@ findEmpresaByCodigo = async (codigo_empresa) => {
 createFacturaTransaccion = async (facTranObj) => {
     let conn;
     const opts = { outFormat: oracledb.OBJECT, autoCommit: true };
-    //const facTran = Object.assign({}, facTranObj);
-    facTran = {};
+    const facTran = Object.assign({}, facTranObj);
     facTran.CODIGO_PRE_TRANSACCION = {
       dir: oracledb.BIND_OUT,
       type: oracledb.NUMBER
